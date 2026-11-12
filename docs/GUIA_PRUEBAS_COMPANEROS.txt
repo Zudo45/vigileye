@@ -1,0 +1,115 @@
+GUÍA DE PRUEBAS DE VIGILEYE (para completar la sección 6.2 del informe)
+Proyecto: Detector de somnolencia al volante - Inteligencia Artificial: Principios y Técnicas (UPAO)
+
+======================================================================
+0. QUÉ SE VA A HACER
+======================================================================
+Cada integrante sigue el guion de abajo con VigilEye, y envía:
+  (1) los archivos CSV que descarga la aplicación  <- LO MÁS IMPORTANTE
+  (2) unas pocas capturas de pantalla
+  (3) la hoja de registro (al final de este archivo) llena
+
+Con los CSV se calculan los resultados reales: tiempo de respuesta, falsas alarmas por minuto, FPS y aciertos por
+escenario. Las capturas solas no alcanzan para calcular eso, por eso cada escenario se guarda en su propio CSV.
+El CSV solo contiene números (nivel, EAR, postura...). NO contiene imágenes ni video.
+
+======================================================================
+1. ANTES DE EMPEZAR
+======================================================================
+Dirección de la aplicación:   https://zudo45.github.io/vigileye/index.html?dev=1
+  - El "?dev=1" al final muestra una tarjeta "Diagnóstico" (milisegundos y FPS). Es necesaria para las pruebas.
+  - En laptop se puede usar Chrome o Edge. En celular, Chrome (Android) o Safari (iPhone).
+  - La cámara pide permiso la primera vez: aceptar.
+
+Condiciones (anotarlas en la hoja de registro):
+  - Dispositivo y navegador (ej.: laptop Lenovo + Chrome; celular Samsung + Chrome).
+  - Luz: día, noche con lámpara, poca luz.
+  - Lentes: sí / no.
+  - Posición: laptop a unos 50 cm del rostro; celular a la altura de los ojos, a unos 60 cm, apoyado y quieto.
+  - Cerrar otras pestañas y programas pesados. Laptop conectada a corriente.
+
+======================================================================
+2. CÓMO SE HACE CADA ESCENARIO (siempre igual)
+======================================================================
+Cada escenario es UNA SESIÓN SEPARADA:
+  1. Pulsar "Iniciar monitoreo".
+  2. Durante los 10 s de calibración: mirar al frente, ojos abiertos, boca cerrada, sin moverse.
+  3. Hacer el escenario.
+  4. Pulsar "Detener".
+  5. Pulsar "Descargar registro (CSV)".
+  6. Renombrar el archivo así:   ESCENARIO_Nombre_Dispositivo_Luz_Lentes.csv
+     Ejemplo:   B_Diego_laptop_dia_sinlentes.csv
+
+Para contar segundos en voz baja: "mil uno, mil dos, mil tres..." (o usar un cronómetro).
+
+======================================================================
+3. ESCENARIOS
+======================================================================
+A. NORMAL (60 segundos)
+   Hacer: mirar al frente, parpadear normal, sin dormirse. Se puede hablar poco.
+   Esperado: nivel NORMAL todo el tiempo. Cualquier ALERTA es una falsa alarma.
+   Capturas: 1 captura a mitad de la prueba (panel completo, incluida la tarjeta Diagnóstico con los FPS).
+
+B. CIERRE OCULAR PROLONGADO (5 repeticiones)
+   Hacer: cerrar los ojos 6 segundos seguidos, abrirlos y descansar 10 segundos. Repetir 5 veces.
+   Esperado: ALERTA a los 4 segundos de cierre, aproximadamente.
+   Capturas: la pantalla en el momento en que sale ALERTA (mínimo 2 capturas).
+
+C. CIERRES BREVES Y MOVIMIENTOS (5 repeticiones)
+   Hacer, sin dormirse: cerrar los ojos 1,5 segundos; moverse de forma brusca (girar rápido la cabeza, agacharse a
+   recoger algo, mirar hacia abajo 1 segundo, taparse un ojo con la mano un instante). Descansar 10 s entre repeticiones.
+   Esperado: SIN alarma. Si sale ALERTA, es una falsa alarma: tomar captura.
+
+D. FATIGA ACUMULADA (3 repeticiones; esperar 60 s entre una y otra)
+   Hacer: bostezar dos veces con la boca bien abierta (unos 2 segundos cada bostezo, dentro de 30 segundos);
+   después cerrar los ojos 3 segundos.
+   Esperado: tras los bostezos, ATENCIÓN; al cerrar los ojos, ALERTA a los 2 segundos aproximadamente.
+   Capturas: la pantalla en ATENCIÓN y la pantalla en ALERTA (1 vez).
+
+E. CABECEO (3 repeticiones)
+   Hacer: bajar la cabeza (barbilla hacia el pecho) 4 segundos, volver a la posición normal, descansar 10 s.
+   Esperado: ATENCIÓN por cabeceo (la proporción alto/ancho baja y el cabeceo sube).
+   Capturas: 1 captura con la cabeza abajo.
+
+F. GIRO DE CABEZA (retrovisor)
+   Hacer: mirar hacia un lado 1,5 segundos y volver (3 veces); luego mirar hacia un lado 5 segundos (2 veces).
+   Esperado: el giro corto NO cambia el nivel; el giro largo da ATENCIÓN.
+
+G. (OPCIONAL) INCLINACIÓN LATERAL
+   Hacer: inclinar la cabeza hacia un hombro 3 segundos (3 veces).
+   Esperado: ATENCIÓN por inclinación lateral.
+
+VARIANTES (si se puede): repetir los escenarios A y B con lentes, y con poca luz (solo una lámpara).
+
+======================================================================
+4. QUÉ ENVIAR
+======================================================================
+  - Todos los CSV (uno por escenario y condición).
+  - Las capturas indicadas.
+  - La hoja de registro llena.
+Juntarlo todo en una carpeta con el nombre del integrante y enviarla en un .zip.
+
+======================================================================
+5. SI ALGO FALLA
+======================================================================
+  - La cámara no se abre: revisar que se aceptó el permiso y que la dirección empieza con https:// (o es localhost).
+  - Muy lento (menos de 10 FPS): cerrar otras pestañas, conectar el cargador y anotar el valor de la tarjeta Diagnóstico.
+  - Sale "SIN ROSTRO": acercarse y mirar de frente a la cámara.
+  - Cualquier error en rojo: tomar captura y enviarla.
+
+======================================================================
+HOJA DE REGISTRO (completar y enviar)
+======================================================================
+Integrante: ____________________   Fecha: ___________
+Dispositivo: ____________________   Navegador: ____________________
+Luz: ______________   Lentes: Sí / No   Distancia a la cámara (cm): ______
+FPS que marca la aplicación durante el monitoreo: ______   Línea de la tarjeta Diagnóstico: ______________________
+
+Escenario | Repeticiones hechas | ¿Sonó/salió ALERTA cuando debía? | Falsas alarmas (cuántas) | Observaciones
+A Normal                |   |   |   |
+B Cierre prolongado     |   |   |   |
+C Cierres/movimientos   |   |   |   |
+D Fatiga acumulada      |   |   |   |
+E Cabeceo               |   |   |   |
+F Giro                  |   |   |   |
+G Inclinación (opcional)|   |   |   |

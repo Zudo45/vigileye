@@ -1,0 +1,59 @@
+{
+  "epocas_ejecutadas": 30,
+  "tiempo_entrenamiento_min": 30.79,
+  "pesos_de_clase": {
+    "0": 0.9178,
+    "1": 1.0983
+  },
+  "parametros": 285569,
+  "umbral_validacion": 0.6442,
+  "auc_prueba": 0.9865,
+  "prueba_umbral_0.5": {
+    "exactitud": 0.9396,
+    "precision": 0.9204,
+    "sensibilidad": 0.9848,
+    "especificidad": 0.8712,
+    "f1": 0.9515,
+    "vp": 7661,
+    "fp": 663,
+    "fn": 118,
+    "vn": 4485,
+    "n": 12927
+  },
+  "prueba_umbral_validacion": {
+    "exactitud": 0.9386,
+    "precision": 0.9326,
+    "sensibilidad": 0.9679,
+    "especificidad": 0.8943,
+    "f1": 0.9499,
+    "vp": 7529,
+    "fp": 544,
+    "fn": 250,
+    "vn": 4604,
+    "n": 12927
+  },
+  "prueba_sin_lentes": {
+    "exactitud": 0.9501,
+    "precision": 0.9371,
+    "sensibilidad": 0.9857,
+    "especificidad": 0.8918,
+    "f1": 0.9608,
+    "vp": 5806,
+    "fp": 390,
+    "fn": 84,
+    "vn": 3214,
+    "n": 9494
+  },
+  "prueba_con_lentes": {
+    "exactitud": 0.9106,
+    "precision": 0.8717,
+    "sensibilidad": 0.982,
+    "especificidad": 0.8232,
+    "f1": 0.9236,
+    "vp": 1855,
+    "fp": 273,
+    "fn": 34,
+    "vn": 1271,
+    "n": 3433
+  }
+}

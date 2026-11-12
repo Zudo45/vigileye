@@ -1,0 +1,119 @@
+{
+  "entrada": [
+    64,
+    64,
+    1
+  ],
+  "valores_entrada": "0-255 (la divisi\u00f3n entre 255 forma parte del modelo)",
+  "salida": "p_cerrado",
+  "umbral_validacion": 0.6442196369171143,
+  "capas": [
+    {
+      "tipo": "Rescaling",
+      "nombre": "rescaling"
+    },
+    {
+      "tipo": "Conv2D",
+      "nombre": "conv2d"
+    },
+    {
+      "tipo": "MaxPooling2D",
+      "nombre": "max_pooling2d"
+    },
+    {
+      "tipo": "Conv2D",
+      "nombre": "conv2d_1"
+    },
+    {
+      "tipo": "MaxPooling2D",
+      "nombre": "max_pooling2d_1"
+    },
+    {
+      "tipo": "Conv2D",
+      "nombre": "conv2d_2"
+    },
+    {
+      "tipo": "MaxPooling2D",
+      "nombre": "max_pooling2d_2"
+    },
+    {
+      "tipo": "Flatten",
+      "nombre": "flatten"
+    },
+    {
+      "tipo": "Dense",
+      "nombre": "dense"
+    },
+    {
+      "tipo": "Dropout",
+      "nombre": "dropout"
+    },
+    {
+      "tipo": "Dense",
+      "nombre": "dense_1"
+    }
+  ],
+  "tensores": [
+    {
+      "forma": [
+        3,
+        3,
+        1,
+        16
+      ]
+    },
+    {
+      "forma": [
+        16
+      ]
+    },
+    {
+      "forma": [
+        3,
+        3,
+        16,
+        32
+      ]
+    },
+    {
+      "forma": [
+        32
+      ]
+    },
+    {
+      "forma": [
+        3,
+        3,
+        32,
+        64
+      ]
+    },
+    {
+      "forma": [
+        64
+      ]
+    },
+    {
+      "forma": [
+        4096,
+        64
+      ]
+    },
+    {
+      "forma": [
+        64
+      ]
+    },
+    {
+      "forma": [
+        64,
+        1
+      ]
+    },
+    {
+      "forma": [
+        1
+      ]
+    }
+  ]
+}
