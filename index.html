@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <title>VigilEye · Detector de somnolencia</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+</head>
+<body data-state="idle" data-level="NORMAL">
+
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+    <span>VigilEye</span>
+  </div>
+  <div class="status">
+    <span id="statusChip"><i class="dot"></i><span id="statusText">Listo</span></span>
+    <span id="fpsChip" hidden><span id="fps">0</span> FPS</span>
+  </div>
+</header>
+
+<main>
+  <!-- ===================== INICIO ===================== -->
+  <section id="start" class="screen">
+    <div class="hero">
+      <div class="hero-ico" aria-hidden="true"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+      <h1>Detector de somnolencia al volante</h1>
+      <p>Coloque el dispositivo frente al conductor, con el rostro visible. El video se procesa solo en este dispositivo: no se envía ni se guarda.</p>
+      <ol class="steps">
+        <li><b>1</b> Permita el acceso a la cámara</li>
+        <li><b>2</b> Calibración de 10 segundos mirando al frente</li>
+        <li><b>3</b> Se avisa con sonido y pantalla roja ante señales de fatiga</li>
+      </ol>
+      <button id="btnStart" class="btn primary big" disabled>Cargando modelos…</button>
+      <label class="link-file video-only">Probar con un video grabado
+        <input id="fileInput" type="file" accept="video/*" disabled>
+      </label>
+      <p id="loadMsg" class="muted small"></p>
+    </div>
+  </section>
+
+  <!-- ===================== MONITOREO ===================== -->
+  <section id="app" class="screen">
+    <div class="col-main">
+      <div class="video-wrap">
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="chip eyes-chip" id="eyesChip">Ojos: —</div>
+        <div class="calib" id="calib">
+          <b id="calibNum">10</b>
+          <div class="calib-msg" id="calibMsg">Mire al frente, ojos abiertos, boca cerrada</div>
+          <div class="calib-bar"><i id="calibBar"></i></div>
+        </div>
+      </div>
+      <div id="level" class="level" role="status" aria-live="polite">
+        <div class="big" id="levelText">NORMAL</div>
+        <div class="sm" id="levelSub">Sin señales de fatiga</div>
+      </div>
+      <div class="btns main-btns">
+        <button id="btnMute" class="btn danger" hidden>🔇 Silenciar alarma</button>
+        <button id="btnRecal" class="btn">⟳ Recalibrar</button>
+        <button id="btnStop" class="btn primary">■ Detener</button>
+      </div>
+    </div>
+
+    <div class="col-side">
+      <div class="card">
+        <h3>Indicadores</h3>
+        <div class="row"><span>PERCLOS (60 s)</span><span><b id="mPerclos">0,00</b><span class="meter"><i id="barPerclos"></i></span></span></div>
+        <div class="row"><span>Ojos (EAR relativo)</span><b id="mEar">—</b></div>
+        <div class="row"><span>Prob. CNN de ojo cerrado</span><b id="mCnn">—</b></div>
+        <div class="row"><span>Apertura de boca (Δ MAR)</span><b id="mMar">—</b></div>
+        <div class="row"><span>Bostezos (60 s)</span><b id="mYawns">0</b></div>
+      </div>
+
+      <div class="card">
+        <h3>Postura de la cabeza</h3>
+        <div class="row"><span>Cabeceo (Δ pitch)</span><b id="mPitch">—</b></div>
+        <div class="row"><span>Proporción alto/ancho</span><b id="mHw">—</b></div>
+        <div class="row"><span>Giro lateral (Δ yaw)</span><b id="mYaw">—</b></div>
+        <div class="row"><span>Inclinación lateral (Δ roll)</span><b id="mRoll">—</b></div>
+      </div>
+
+      <div class="card">
+        <h3>Opciones</h3>
+        <label class="row tog dev-only"><span>Usar red neuronal (CNN)</span><input type="checkbox" id="chkCnn" checked><i class="sw"></i></label>
+        <label class="row tog"><span>Sonido de alarma</span><input type="checkbox" id="chkSound" checked><i class="sw"></i></label>
+        <label class="row tog"><span>Mostrar puntos faciales</span><input type="checkbox" id="chkPoints" checked><i class="sw"></i></label>
+      </div>
+
+      <div class="card dev-card"><h3>Diagnóstico</h3><div class="row"><span id="devStats">—</span></div></div>
+
+      <div class="btns">
+        <button id="btnCsv" class="btn" disabled>⬇ Descargar registro (CSV)</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="alert" hidden></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

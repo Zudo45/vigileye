@@ -1,0 +1,14 @@
+{
+  "name": "vigileye-web",
+  "version": "1.0.0",
+  "description": "VigilEye: detector de somnolencia al volante que corre en el navegador",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/test_rules.mjs && node tests/test_features.mjs && node tests/test_cnn.mjs",
+    "start": "npx --yes serve -l 8000 ."
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs": "4.22.0"
+  }
+}
