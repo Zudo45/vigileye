@@ -7,9 +7,9 @@
  *   -> nivel (NORMAL / ATENCION / RIESGO / ALERTA) -> alarma + registro CSV
  * Todo se procesa en este dispositivo; el video no se envía ni se guarda.
  */
-import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js';
-import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js';
-import { buildModel, predictFromFrame, selfTest } from './cnn.js';
+import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js?v=4';
+import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js?v=4';
+import { buildModel, predictFromFrame, selfTest } from './cnn.js?v=4';
 
 const MP_VERSION = '0.10.14';
 const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
