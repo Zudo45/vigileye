@@ -49,6 +49,15 @@ export function eulerFromMatrix(data) {
   };
 }
 
+/**
+ * Transformación para dibujar sobre un video mostrado con object-fit: cover.
+ * Devuelve la escala s y el desplazamiento (ox, oy): x_pantalla = x_video * s + ox.
+ */
+export function coverTransform(vw, vh, cw, ch) {
+  const s = Math.max(cw / vw, ch / vh);
+  return { s, ox: (cw - vw * s) / 2, oy: (ch - vh * s) / 2 };
+}
+
 /** Diferencia a-b en grados, envuelta a [-180, 180]. */
 export const angleDiff = (a, b) => ((a - b + 180.0) % 360.0 + 360.0) % 360.0 - 180.0;
 

@@ -1,6 +1,6 @@
 // Pruebas de las medidas geométricas. Ejecutar:  node tests/test_features.mjs
 import assert from 'node:assert/strict';
-import { eyeAspectRatio, mouthAspectRatio, eulerFromMatrix, angleDiff, extractFeatures, eyeBox } from '../js/features.js';
+import { eyeAspectRatio, mouthAspectRatio, eulerFromMatrix, angleDiff, extractFeatures, eyeBox, coverTransform } from '../js/features.js';
 
 const close = (a, b, tol = 1e-6) => assert.ok(Math.abs(a - b) < tol, `${a} != ${b}`);
 
@@ -44,4 +44,12 @@ set(263, 370, 210);
 close(extractFeatures({ faceLandmarks: [lm] }, 640, 480).rollEye, Math.atan2(10, 100) * 180 / Math.PI, 1e-6);
 assert.equal(extractFeatures({ faceLandmarks: [] }, 640, 480), null);
 console.log('OK   extractFeatures (proporción alto/ancho, inclinación lateral)');
+// object-fit: cover: video 640x480 en un cuadro vertical de 300x400 -> escala 400/480, se recorta a los lados
+const ct = coverTransform(640, 480, 300, 400);
+close(ct.s, 400 / 480); close(ct.oy, 0); close(ct.ox, (300 - 640 * 400 / 480) / 2);
+// el centro del video cae en el centro del cuadro
+close(320 * ct.s + ct.ox, 150); close(240 * ct.s + ct.oy, 200);
+// video vertical 480x640 en un cuadro 3:4: sin recorte
+const ct2 = coverTransform(480, 640, 300, 400); close(ct2.s, 300 / 480); close(ct2.ox, 0); close(ct2.oy, 0);
+console.log('OK   transformación cover para la superposición');
 console.log('\nPruebas de medidas superadas');

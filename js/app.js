@@ -8,7 +8,7 @@
  * Todo se procesa en este dispositivo; el video no se envía ni se guarda.
  */
 import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js';
-import { extractFeatures, eyeBox, angleDiff } from './features.js';
+import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js';
 import { buildModel, predictFromFrame, selfTest } from './cnn.js';
 
 const MP_VERSION = '0.10.14';
@@ -153,7 +153,7 @@ async function start(file = null) {
     toast(file ? 'No se pudo abrir el video.' : 'No se pudo acceder a la cámara. Permita el acceso y use HTTPS o localhost.');
     return;
   }
-  try { if ('wakeLock' in navigator && !file) wakeLock = await navigator.wakeLock.request('screen'); } catch { /* opcional */ }
+  await keepScreenOn(!!file);
 
   log = []; el.btnCsv.disabled = true; el.btnRecal.disabled = isFile;
   lastTs = -1; frameCount = 0; lastP = null; fpsAvg = 0; lastFrameT = performance.now();
@@ -178,12 +178,31 @@ function stop(ended = false) {
   el.video.pause(); el.video.srcObject = null;
   if (isFile && el.video.src) { URL.revokeObjectURL(el.video.src); el.video.removeAttribute('src'); el.video.load(); }
   if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+  $('wakeChip').hidden = true;
   updateAlarm(NORMAL);
   const ctx = el.overlay.getContext('2d'); ctx.clearRect(0, 0, el.overlay.width, el.overlay.height);
   el.fpsChip.hidden = true; el.statusText.textContent = 'Detenido';
   el.btnCsv.disabled = log.length === 0; el.btnMute.hidden = true;
   if (ended && log.length) { setState('end'); setLevelAttr(NORMAL); el.levelText.textContent = 'FIN DEL VIDEO'; el.levelSub.textContent = `${log.length} cuadros analizados · descargue el registro CSV`; }
   else setState('idle');
+}
+
+// Mantiene la pantalla encendida durante el monitoreo (Screen Wake Lock), aunque el apagado automático esté configurado
+async function keepScreenOn(fromFile) {
+  const chip = $('wakeChip');
+  if (fromFile) { chip.hidden = true; return; }
+  try {
+    if (!('wakeLock' in navigator)) throw new Error('sin soporte');
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; chip.hidden = true; });
+    chip.hidden = false;
+  } catch (e) {
+    wakeLock = null; chip.hidden = true;
+    if (!keepScreenOn.avisado) {
+      keepScreenOn.avisado = true;
+      toast('Este navegador no puede mantener la pantalla encendida. Desactive el apagado automático del dispositivo durante el monitoreo.', 9000);
+    }
+  }
 }
 
 // ---------------------------------------------------------------- bucle principal
@@ -328,17 +347,24 @@ function clearMetrics() {
 const COLORS = { eye: '#4ade80', eyeClosed: '#f87171', mouth: '#fbbf24', posture: '#38bdf8' };
 function drawOverlay(f, w, h) {
   const c = el.overlay;
-  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
-  const ctx = c.getContext('2d'); ctx.clearRect(0, 0, w, h);
+  const cw = c.clientWidth, ch = c.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (!cw || !ch) return;
+  const pw = Math.round(cw * dpr), ph = Math.round(ch * dpr);
+  if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, pw, ph);
   if (!f || !el.chkPoints.checked) return;
-  const dots = (pts, color, r) => { ctx.fillStyle = color; for (const [x, y] of pts) { ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); } };
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const { s, ox, oy } = coverTransform(w, h, cw, ch);          // el video se muestra recortado (object-fit: cover)
+  const P = ([x, y]) => [x * s + ox, y * s + oy];
+  const dots = (pts, color, r) => { ctx.fillStyle = color; for (const p of pts) { const [x, y] = P(p); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); } };
   const closed = el.eyesChip.classList.contains('closed');
-  dots([...f.rightEye, ...f.leftEye], closed ? COLORS.eyeClosed : COLORS.eye, Math.max(2, w / 220));
-  dots(f.mouth, COLORS.mouth, Math.max(2, w / 220));
+  dots([...f.rightEye, ...f.leftEye], closed ? COLORS.eyeClosed : COLORS.eye, 2.5);
+  dots(f.mouth, COLORS.mouth, 2.5);
   const p = f.posture;
-  ctx.strokeStyle = COLORS.posture; ctx.lineWidth = Math.max(1.5, w / 400); ctx.setLineDash([6, 5]);
-  ctx.beginPath(); ctx.moveTo(...p.forehead); ctx.lineTo(...p.chin); ctx.moveTo(...p.cheekR); ctx.lineTo(...p.cheekL); ctx.stroke(); ctx.setLineDash([]);
-  dots([p.forehead, p.chin, p.cheekR, p.cheekL, p.nose], COLORS.posture, Math.max(3, w / 160));
+  ctx.strokeStyle = COLORS.posture; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(...P(p.forehead)); ctx.lineTo(...P(p.chin)); ctx.moveTo(...P(p.cheekR)); ctx.lineTo(...P(p.cheekL)); ctx.stroke(); ctx.setLineDash([]);
+  dots([p.forehead, p.chin, p.cheekR, p.cheekL, p.nose], COLORS.posture, 4);
 }
 
 // ---------------------------------------------------------------- CSV
@@ -362,9 +388,7 @@ el.btnCsv.addEventListener('click', downloadCsv);
 el.chkSound.addEventListener('change', () => { if (el.chkSound.checked) ensureAudio(); updateAlarm(engine.level); });
 el.video.addEventListener('ended', () => { if (running && isFile) stop(true); });
 document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible' && running && !isFile && 'wakeLock' in navigator && !wakeLock) {
-    try { wakeLock = await navigator.wakeLock.request('screen'); } catch { /* opcional */ }
-  }
+  if (document.visibilityState === 'visible' && running && !isFile && !wakeLock) await keepScreenOn(false);
 });
 
 loadAssets();
