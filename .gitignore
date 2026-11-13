@@ -4,3 +4,4 @@ package-lock.json
 !docs/resultados/*.csv
 .DS_Store
 Thumbs.db
+!docs/pruebas/*.csv
