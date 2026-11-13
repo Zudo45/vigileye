@@ -35,8 +35,14 @@ Cada escenario es UNA SESIÓN SEPARADA:
   1. Pulsar "Iniciar monitoreo".
   2. Durante los 10 s de calibración: mirar al frente, ojos abiertos, boca cerrada, sin moverse.
   3. Hacer el escenario.
-  4. Pulsar "Detener".
+  4. Pulsar "Detener". La pantalla pasa a "MONITOREO DETENIDO" y aparece el botón de descarga.
+     (Si no aparece, se detuvo antes de terminar los 10 s de calibración: repetir el escenario.)
   5. Pulsar "Descargar registro (CSV)".
+     - En el celular también aparece "Compartir": sirve para enviar el archivo directo por WhatsApp o correo.
+     - El archivo queda en la carpeta DESCARGAS del dispositivo:
+         Android: aplicación "Archivos" > Descargas (o en Chrome: menú ⋮ > Descargas).
+         iPhone: aplicación "Archivos" > Descargas (Safari pregunta "¿Descargar?": aceptar).
+     - Después de descargar, "Nueva sesión" vuelve al inicio para el siguiente escenario.
   6. Renombrar el archivo así:   ESCENARIO_Nombre_Dispositivo_Luz_Lentes.csv
      Ejemplo:   B_Diego_laptop_dia_sinlentes.csv
 
@@ -92,6 +98,8 @@ Juntarlo todo en una carpeta con el nombre del integrante y enviarla en un .zip.
 ======================================================================
 5. SI ALGO FALLA
 ======================================================================
+  - No se descarga el archivo: abrir la página en Chrome (Android) o Safari (iPhone), NO en el navegador interno
+    de WhatsApp, Instagram u otra aplicación. Si no funciona, probar el botón "Compartir".
   - La cámara no se abre: revisar que se aceptó el permiso y que la dirección empieza con https:// (o es localhost).
   - Muy lento (menos de 10 FPS): cerrar otras pestañas, conectar el cargador y anotar el valor de la tarjeta Diagnóstico.
   - Sale "SIN ROSTRO": acercarse y mirar de frente a la cámara.

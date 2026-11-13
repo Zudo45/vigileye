@@ -7,9 +7,9 @@
  *   -> nivel (NORMAL / ATENCION / RIESGO / ALERTA) -> alarma + registro CSV
  * Todo se procesa en este dispositivo; el video no se envía ni se guarda.
  */
-import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js?v=4';
-import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js?v=4';
-import { buildModel, predictFromFrame, selfTest } from './cnn.js?v=4';
+import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js?v=5';
+import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js?v=5';
+import { buildModel, predictFromFrame, selfTest } from './cnn.js?v=5';
 
 const MP_VERSION = '0.10.14';
 const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
@@ -26,7 +26,7 @@ if (DEV_PARAM === 'video') document.body.classList.add('devvideo');
 const $ = id => document.getElementById(id);
 const el = {
   video: $('video'), overlay: $('overlay'), wrap: document.querySelector('.video-wrap'),
-  btnStart: $('btnStart'), btnStop: $('btnStop'), btnRecal: $('btnRecal'), btnMute: $('btnMute'), btnCsv: $('btnCsv'),
+  btnStart: $('btnStart'), btnStop: $('btnStop'), btnRecal: $('btnRecal'), btnMute: $('btnMute'), btnCsv: $('btnCsv'), btnNew: $('btnNew'), btnShare: $('btnShare'),
   fileInput: $('fileInput'), chkCnn: $('chkCnn'), chkSound: $('chkSound'), chkPoints: $('chkPoints'),
   levelText: $('levelText'), levelSub: $('levelSub'), eyesChip: $('eyesChip'),
   calibNum: $('calibNum'), calibMsg: $('calibMsg'), calibBar: $('calibBar'),
@@ -183,8 +183,15 @@ function stop(ended = false) {
   const ctx = el.overlay.getContext('2d'); ctx.clearRect(0, 0, el.overlay.width, el.overlay.height);
   el.fpsChip.hidden = true; el.statusText.textContent = 'Detenido';
   el.btnCsv.disabled = log.length === 0; el.btnMute.hidden = true;
-  if (ended && log.length) { setState('end'); setLevelAttr(NORMAL); el.levelText.textContent = 'FIN DEL VIDEO'; el.levelSub.textContent = `${log.length} cuadros analizados · descargue el registro CSV`; }
-  else setState('idle');
+  if (log.length) {                                  // pantalla de fin de sesión, con el botón para descargar el registro
+    setState('end'); setLevelAttr(NORMAL);
+    el.levelText.textContent = ended ? 'FIN DEL VIDEO' : 'MONITOREO DETENIDO';
+    el.levelSub.textContent = `${log.length} cuadros registrados · descargue el registro CSV`;
+    window.scrollTo(0, 0);
+  } else {
+    setState('idle');
+    toast('Se detuvo antes de terminar la calibración: no hay registro para descargar.');
+  }
 }
 
 // Mantiene la pantalla encendida durante el monitoreo (Screen Wake Lock), aunque el apagado automático esté configurado
@@ -368,15 +375,30 @@ function drawOverlay(f, w, h) {
 }
 
 // ---------------------------------------------------------------- CSV
-function downloadCsv() {
+function buildCsv() {
   const head = ['t_s', 'nivel', 'rostro', 'ear', 'ear_rel', 'p_cnn', 'puntaje_cierre', 'ojo_cerrado', 'mar_delta', 'pitch_dev', 'yaw_dev', 'roll_dev', 'hw_rel', 'perclos', 'bostezos'];
-  const cell = v => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(4)).replace('.', ',') : v ?? '');
-  const csv = '﻿' + [head, ...log].map(r => r.map(cell).join(';')).join('\r\n');
+  const cell = v => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(4)) : v ?? '');
+  const csv = '\ufeff' + [head, ...log].map(r => r.map(cell).join(',')).join('\r\n');
+  const name = `vigileye_sesion_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+  return { csv, name };
+}
+function downloadCsv() {
+  const { csv, name } = buildCsv();
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  a.download = `vigileye_sesion_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  toast('Registro descargado. Búsquelo en la carpeta Descargas del dispositivo.', 8000);
 }
+async function shareCsv() {                       // en el celular permite enviarlo directo (WhatsApp, correo, Drive…)
+  const { csv, name } = buildCsv();
+  const file = new File([csv], name, { type: 'text/csv' });
+  try { await navigator.share({ files: [file], title: 'Registro VigilEye' }); }
+  catch (e) { if (e.name !== 'AbortError') toast('No se pudo compartir. Use "Descargar registro (CSV)".'); }
+}
+function newSession() { log = []; el.btnCsv.disabled = true; setState('idle'); setLevelAttr(NORMAL); window.scrollTo(0, 0); }
+if (DEV) window.vigil = { get log() { return log; }, buildCsv, downloadCsv, newSession, stop };
 
 // ---------------------------------------------------------------- eventos
 el.btnStart.addEventListener('click', () => start());
@@ -385,6 +407,14 @@ el.btnStop.addEventListener('click', () => stop(false));
 el.btnRecal.addEventListener('click', () => { if (running && !isFile) beginCalibration(); });
 el.btnMute.addEventListener('click', () => { muted = true; updateAlarm(ALERTA); el.btnMute.hidden = true; });
 el.btnCsv.addEventListener('click', downloadCsv);
+el.btnShare.addEventListener('click', shareCsv);
+el.btnNew.addEventListener('click', newSession);
+try {                                             // mostrar "Compartir" solo si el navegador puede compartir archivos
+  if (navigator.canShare && navigator.canShare({ files: [new File(['a'], 'a.csv', { type: 'text/csv' })] })) el.btnShare.hidden = false;
+} catch { /* sin compartir */ }
+if (/FBAN|FBAV|Instagram|WhatsApp|Line\/|MicroMessenger|Messenger|TikTok/i.test(navigator.userAgent)) {
+  toast('Está en un navegador interno de una aplicación: abra esta página en Chrome o Safari para poder descargar el registro.', 12000);
+}
 el.chkSound.addEventListener('change', () => { if (el.chkSound.checked) ensureAudio(); updateAlarm(engine.level); });
 el.video.addEventListener('ended', () => { if (running && isFile) stop(true); });
 document.addEventListener('visibilitychange', async () => {
