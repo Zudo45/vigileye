@@ -111,3 +111,7 @@ Los cuadernos de `notebooks/` se ejecutan en Google Colab con GPU. `01_Preparaci
 - Fusek, R. (2018). Pupil localization using geodesic distance. *ISVC 2018* (MRL Eye Dataset).
 - Lugaresi, C. et al. (2019). MediaPipe: A framework for building perception pipelines. arXiv:1906.08172.
 - Dinges, D. F., & Grace, R. (1998). *PERCLOS: A valid psychophysiological measure of alertness* (FHWA-MCRT-98-006).
+
+---
+
+*Última actualización: 13 de noviembre de 2026.*
