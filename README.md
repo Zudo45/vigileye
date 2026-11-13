@@ -80,7 +80,7 @@ docs/                         informe, guía de pruebas, resultados del entrenam
 ## Publicar cambios
 
 GitHub Pages hace que los navegadores guarden los archivos 10 minutos. Para que un cambio se vea de inmediato, **subir el número de versión**
-(`?v=5` → `?v=6`) en `index.html` (CSS y `app.js`) y en los `import` de `js/app.js`; después `git add .`, `git commit` y `git push`.
+(`?v=6` → `?v=7`) en `index.html` (CSS y `app.js`) y en los `import` de `js/app.js`; después `git add .`, `git commit` y `git push`.
 
 ## Pruebas automáticas
 

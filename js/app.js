@@ -7,9 +7,9 @@
  *   -> nivel (NORMAL / ATENCION / RIESGO / ALERTA) -> alarma + registro CSV
  * Todo se procesa en este dispositivo; el video no se envía ni se guarda.
  */
-import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js?v=5';
-import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js?v=5';
-import { buildModel, predictFromFrame, selfTest } from './cnn.js?v=5';
+import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js?v=6';
+import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js?v=6';
+import { buildModel, predictFromFrame, selfTest } from './cnn.js?v=6';
 
 const MP_VERSION = '0.10.14';
 const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
@@ -63,6 +63,8 @@ let calib = { ear: [], mar: [], pitch: [], yaw: [], roll: [], hw: [] };
 let engine = new RuleEngine(), cfg = { ...DEFAULT_CONFIG };
 let sm = newSmoothers();
 let log = [];
+let escenario = '';                                    // prueba en curso (A-F o descanso), solo en ?dev=1
+const SCEN_NAMES = { A: 'A · Normal', B: 'B · Ojos cerrados', C: 'C · Movimientos', D: 'D · Bostezos + ojos cerrados', E: 'E · Cabeceo', F: 'F · Giro de cabeza', descanso: 'Descanso' };
 
 function newSmoothers() { return { ear: new MovingAvg(), mar: new MovingAvg(), pitch: new MovingAvg(), yaw: new MovingAvg(), roll: new MovingAvg(), hw: new MovingAvg(), cnn: new MovingAvg() }; }
 
@@ -163,6 +165,7 @@ async function start(file = null) {
 }
 
 function beginCalibration() {
+  clearScenario();
   base = null; calib = { ear: [], mar: [], pitch: [], yaw: [], roll: [], hw: [] };
   sm = newSmoothers(); engine = new RuleEngine(cfg); muted = false;
   t0 = performance.now(); setState('calib'); setLevelAttr(NORMAL);
@@ -278,10 +281,10 @@ function processFrame() {
     level = engine.update(t, true, { eyeClosed: closed, marDelta, pitchDev, hwRel, rollDev, yawDev });
     info = engine.info;
     sig = { earRel, pCnn, score, closed, marDelta, pitchDev, hwRel, rollDev, yawDev };
-    log.push([t, level, 1, ear, earRel, pCnn, score, closed ? 1 : 0, marDelta, pitchDev, yawDev, rollDev, hwRel, info.perclos ?? 0, info.yawns ?? 0]);
+    log.push([t, level, 1, ear, earRel, pCnn, score, closed ? 1 : 0, marDelta, pitchDev, yawDev, rollDev, hwRel, info.perclos ?? 0, info.yawns ?? 0, escenario]);
   }
   if (base !== null) {
-    if (!f) log.push([t, level, 0, '', '', '', '', '', '', '', '', '', '', info.perclos ?? 0, info.yawns ?? 0]);
+    if (!f) log.push([t, level, 0, '', '', '', '', '', '', '', '', '', '', info.perclos ?? 0, info.yawns ?? 0, escenario]);
     showResult(level, info, sig, f);
     updateAlarm(level);
   }
@@ -376,7 +379,7 @@ function drawOverlay(f, w, h) {
 
 // ---------------------------------------------------------------- CSV
 function buildCsv() {
-  const head = ['t_s', 'nivel', 'rostro', 'ear', 'ear_rel', 'p_cnn', 'puntaje_cierre', 'ojo_cerrado', 'mar_delta', 'pitch_dev', 'yaw_dev', 'roll_dev', 'hw_rel', 'perclos', 'bostezos'];
+  const head = ['t_s', 'nivel', 'rostro', 'ear', 'ear_rel', 'p_cnn', 'puntaje_cierre', 'ojo_cerrado', 'mar_delta', 'pitch_dev', 'yaw_dev', 'roll_dev', 'hw_rel', 'perclos', 'bostezos', 'escenario'];
   const cell = v => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(4)) : v ?? '');
   const csv = '\ufeff' + [head, ...log].map(r => r.map(cell).join(',')).join('\r\n');
   const name = `vigileye_sesion_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
@@ -397,8 +400,19 @@ async function shareCsv() {                       // en el celular permite envia
   try { await navigator.share({ files: [file], title: 'Registro VigilEye' }); }
   catch (e) { if (e.name !== 'AbortError') toast('No se pudo compartir. Use "Descargar registro (CSV)".'); }
 }
-function newSession() { log = []; el.btnCsv.disabled = true; setState('idle'); setLevelAttr(NORMAL); window.scrollTo(0, 0); }
-if (DEV) window.vigil = { get log() { return log; }, buildCsv, downloadCsv, newSession, stop };
+function setScenario(s) {
+  if (base === null) { toast('Espere a que termine la calibración (10 s) para marcar una prueba.'); return; }
+  escenario = s;
+  engine = new RuleEngine(cfg); sm = newSmoothers();     // reinicia PERCLOS y bostezos: cada prueba parte limpia
+  $('scenNow').textContent = SCEN_NAMES[s] || s;
+  document.querySelectorAll('#scenBar button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+}
+function clearScenario() {
+  escenario = ''; $('scenNow').textContent = 'ninguna';
+  document.querySelectorAll('#scenBar button').forEach(b => b.classList.remove('on'));
+}
+function newSession() { clearScenario(); log = []; el.btnCsv.disabled = true; setState('idle'); setLevelAttr(NORMAL); window.scrollTo(0, 0); }
+if (DEV) window.vigil = { get log() { return log; }, buildCsv, downloadCsv, newSession, stop, setScenario, testSetBase() { base = { ear: 0.3, mar: 0.3, hw: 1, roll: 0, pitch: 0, yaw: 0 }; } };
 
 // ---------------------------------------------------------------- eventos
 el.btnStart.addEventListener('click', () => start());
@@ -407,6 +421,7 @@ el.btnStop.addEventListener('click', () => stop(false));
 el.btnRecal.addEventListener('click', () => { if (running && !isFile) beginCalibration(); });
 el.btnMute.addEventListener('click', () => { muted = true; updateAlarm(ALERTA); el.btnMute.hidden = true; });
 el.btnCsv.addEventListener('click', downloadCsv);
+document.querySelectorAll('#scenBar button').forEach(b => b.addEventListener('click', () => setScenario(b.dataset.s)));
 el.btnShare.addEventListener('click', shareCsv);
 el.btnNew.addEventListener('click', newSession);
 try {                                             // mostrar "Compartir" solo si el navegador puede compartir archivos

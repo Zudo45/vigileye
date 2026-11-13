@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1220">
   <title>VigilEye · Detector de somnolencia</title>
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=6">
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 </head>
 <body data-state="idle" data-level="NORMAL">
@@ -64,6 +64,14 @@
         <button id="btnRecal" class="btn">⟳ Recalibrar</button>
         <button id="btnStop" class="btn primary">■ Detener</button>
       </div>
+      <div class="scen" id="scenBar">
+        <div class="scen-title">Prueba en curso: <b id="scenNow">ninguna</b></div>
+        <div class="scen-btns">
+          <button data-s="A">A</button><button data-s="B">B</button><button data-s="C">C</button>
+          <button data-s="D">D</button><button data-s="E">E</button><button data-s="F">F</button>
+          <button data-s="descanso" class="rest">Descanso</button>
+        </div>
+      </div>
       <div class="btns end-only">
         <button id="btnCsv" class="btn primary" disabled>⬇ Descargar registro (CSV)</button>
       </div>
@@ -105,6 +113,6 @@
 </main>
 
 <div id="toast" class="toast" role="alert" hidden></div>
-<script type="module" src="js/app.js?v=5"></script>
+<script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>
