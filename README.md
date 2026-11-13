@@ -57,7 +57,7 @@ La cámara solo funciona en `localhost` o en una página con **HTTPS**. Se neces
 
 ### Opciones de desarrollo (para pruebas)
 Agregando `?dev=1` a la dirección aparecen el panel de **Diagnóstico** (tiempos y FPS) y el interruptor de la CNN.
-La tarjeta **Descargar registro (CSV)** guarda una fila por cuadro (nivel, EAR, probabilidad de la CNN, postura, PERCLOS…) y sirve
+La tarjeta **Descargar registro (CSV)** guarda una fila por cuadro (nivel, EAR, probabilidad de la CNN, postura, PERCLOS, prueba en curso, FPS…) y sirve
 como evidencia de las pruebas.
 
 ## Estructura del repositorio
@@ -80,7 +80,7 @@ docs/                         informe, guía de pruebas, resultados del entrenam
 ## Publicar cambios
 
 GitHub Pages hace que los navegadores guarden los archivos 10 minutos. Para que un cambio se vea de inmediato, **subir el número de versión**
-(`?v=6` → `?v=7`) en `index.html` (CSS y `app.js`) y en los `import` de `js/app.js`; después `git add .`, `git commit` y `git push`.
+(`?v=7` → `?v=8`) en `index.html` (CSS y `app.js`) y en los `import` de `js/app.js`; después `git add .`, `git commit` y `git push`.
 
 ## Pruebas automáticas
 

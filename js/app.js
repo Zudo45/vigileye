@@ -7,9 +7,9 @@
  *   -> nivel (NORMAL / ATENCION / RIESGO / ALERTA) -> alarma + registro CSV
  * Todo se procesa en este dispositivo; el video no se envía ni se guarda.
  */
-import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js?v=6';
-import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js?v=6';
-import { buildModel, predictFromFrame, selfTest } from './cnn.js?v=6';
+import { RuleEngine, DEFAULT_CONFIG, decideEyeClosed, NORMAL, ATENCION, RIESGO, ALERTA, SIN_ROSTRO } from './rules.js?v=7';
+import { extractFeatures, eyeBox, angleDiff, coverTransform } from './features.js?v=7';
+import { buildModel, predictFromFrame, selfTest } from './cnn.js?v=7';
 
 const MP_VERSION = '0.10.14';
 const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}`;
@@ -281,10 +281,10 @@ function processFrame() {
     level = engine.update(t, true, { eyeClosed: closed, marDelta, pitchDev, hwRel, rollDev, yawDev });
     info = engine.info;
     sig = { earRel, pCnn, score, closed, marDelta, pitchDev, hwRel, rollDev, yawDev };
-    log.push([t, level, 1, ear, earRel, pCnn, score, closed ? 1 : 0, marDelta, pitchDev, yawDev, rollDev, hwRel, info.perclos ?? 0, info.yawns ?? 0, escenario]);
+    log.push([t, level, 1, ear, earRel, pCnn, score, closed ? 1 : 0, marDelta, pitchDev, yawDev, rollDev, hwRel, info.perclos ?? 0, info.yawns ?? 0, escenario, +fpsAvg.toFixed(1), +stats.total.toFixed(1)]);
   }
   if (base !== null) {
-    if (!f) log.push([t, level, 0, '', '', '', '', '', '', '', '', '', '', info.perclos ?? 0, info.yawns ?? 0, escenario]);
+    if (!f) log.push([t, level, 0, '', '', '', '', '', '', '', '', '', '', info.perclos ?? 0, info.yawns ?? 0, escenario, +fpsAvg.toFixed(1), +stats.total.toFixed(1)]);
     showResult(level, info, sig, f);
     updateAlarm(level);
   }
@@ -379,7 +379,7 @@ function drawOverlay(f, w, h) {
 
 // ---------------------------------------------------------------- CSV
 function buildCsv() {
-  const head = ['t_s', 'nivel', 'rostro', 'ear', 'ear_rel', 'p_cnn', 'puntaje_cierre', 'ojo_cerrado', 'mar_delta', 'pitch_dev', 'yaw_dev', 'roll_dev', 'hw_rel', 'perclos', 'bostezos', 'escenario'];
+  const head = ['t_s', 'nivel', 'rostro', 'ear', 'ear_rel', 'p_cnn', 'puntaje_cierre', 'ojo_cerrado', 'mar_delta', 'pitch_dev', 'yaw_dev', 'roll_dev', 'hw_rel', 'perclos', 'bostezos', 'escenario', 'fps', 'ms_cuadro'];
   const cell = v => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(4)) : v ?? '');
   const csv = '\ufeff' + [head, ...log].map(r => r.map(cell).join(',')).join('\r\n');
   const name = `vigileye_sesion_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
